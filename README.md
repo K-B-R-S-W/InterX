@@ -236,13 +236,5 @@ Recording conversations without consent may be illegal in your jurisdiction. Ens
 
 **Use responsibly and ethically.**
 
-## 🤝 Next Steps
-
-1. ✅ Build the Android app (companion)
-2. ✅ Connect both devices
-3. ✅ Join a meeting and test
-4. 🎯 Adjust confidence/debounce settings as needed
-
----
-
 **Need help?** Check the console output when running for detailed logs.
+
