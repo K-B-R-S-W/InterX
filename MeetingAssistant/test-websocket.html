@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Meeting Assistant - WebSocket Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f0f0f0;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+        }
+        .status {
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .connected {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .disconnected {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        #messages {
+            border: 1px solid #ddd;
+            padding: 15px;
+            min-height: 200px;
+            max-height: 400px;
+            overflow-y: auto;
+            background: #fafafa;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .info {
+            background: #e7f3ff;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border-left: 4px solid #007bff;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔌 Meeting Assistant - WebSocket Test</h1>
+        
+        <div class="info">
+            <strong>📡 Server:</strong> ws://192.168.1.123:8080/display<br>
+            <strong>💡 Tip:</strong> This page tests the Windows app's WebSocket server
+        </div>
+
+        <div id="status" class="status disconnected">⚠️ Disconnected</div>
+
+        <div style="margin: 20px 0;">
+            <button id="connectBtn" onclick="connect()">Connect to Server</button>
+            <button id="disconnectBtn" onclick="disconnect()" disabled>Disconnect</button>
+            <button id="clearBtn" onclick="clearMessages()">Clear Messages</button>
+        </div>
+
+        <h3>📨 Messages Received:</h3>
+        <div id="messages">Waiting to connect...</div>
+    </div>
+
+    <script>
+        let ws = null;
+        const serverUrl = 'ws://192.168.1.123:8080/display';
+        
+        function updateStatus(connected, message) {
+            const statusEl = document.getElementById('status');
+            const connectBtn = document.getElementById('connectBtn');
+            const disconnectBtn = document.getElementById('disconnectBtn');
+            
+            if (connected) {
+                statusEl.className = 'status connected';
+                statusEl.textContent = '✅ ' + message;
+                connectBtn.disabled = true;
+                disconnectBtn.disabled = false;
+            } else {
+                statusEl.className = 'status disconnected';
+                statusEl.textContent = '⚠️ ' + message;
+                connectBtn.disabled = false;
+                disconnectBtn.disabled = true;
+            }
+        }
+
+        function addMessage(message, type = 'info') {
+            const messagesEl = document.getElementById('messages');
+            const timestamp = new Date().toLocaleTimeString();
+            const prefix = type === 'error' ? '❌' : type === 'success' ? '✅' : 'ℹ️';
+            messagesEl.textContent += `[${timestamp}] ${prefix} ${message}\n`;
+            messagesEl.scrollTop = messagesEl.scrollHeight;
+        }
+
+        function connect() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                addMessage('Already connected!', 'info');
+                return;
+            }
+
+            addMessage(`Connecting to ${serverUrl}...`, 'info');
+            ws = new WebSocket(serverUrl);
+
+            ws.onopen = function() {
+                updateStatus(true, 'Connected to Meeting Assistant');
+                addMessage('Connected successfully! 🎉', 'success');
+                addMessage('Waiting for AI responses from Windows app...', 'info');
+            };
+
+            ws.onmessage = function(event) {
+                const data = event.data;
+                addMessage(`Received: ${data}`, 'success');
+            };
+
+            ws.onerror = function(error) {
+                addMessage('Connection error occurred', 'error');
+                console.error('WebSocket error:', error);
+            };
+
+            ws.onclose = function() {
+                updateStatus(false, 'Disconnected');
+                addMessage('Connection closed', 'info');
+            };
+        }
+
+        function disconnect() {
+            if (ws) {
+                ws.close();
+                ws = null;
+                updateStatus(false, 'Disconnected');
+                addMessage('Disconnected from server', 'info');
+            }
+        }
+
+        function clearMessages() {
+            document.getElementById('messages').textContent = '';
+            addMessage('Messages cleared', 'info');
+        }
+
+        // Auto-connect on load
+        window.onload = function() {
+            setTimeout(connect, 500);
+        };
+
+        // Cleanup on page unload
+        window.onbeforeunload = function() {
+            if (ws) {
+                ws.close();
+            }
+        };
+    </script>
+</body>
+</html>
